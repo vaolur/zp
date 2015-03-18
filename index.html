@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+	<header>
+		<meta http-equiv="Content-type" content="text/html;charset=utf-8">
+		<!--link rel="stylesheet" type="text/css" href="css/styles.css"-->
+		<link href="css/bootstrap.css" rel="stylesheet">
+		<!--link href="css/bootstrap-responsive.css" rel="stylesheet"-->
+		<script src="js/jquery-1.11.2.min.js"></script>
+		<script src="js/app.js"></script>
+		<script src="js/bootstrap.js"></script>
+		<style type="text/css">
+			.center {
+			     float: none;
+			     margin-left: auto;
+			     margin-right: auto;
+			     max-width: 300px;
+			}
+		</style>
+	</header>
+	<body>
+		<h2 class="text-center text-warning">Как дотянуть до зарплаты?</h2>
+		<h2 class="text-center text-success">Спланируй свои расходы!</h2>
+		<hr>
+		<div class="container">
+		<div class="row">
+			<div class="span3" style="border: 1px solid #ddd; padding: 10px;">
+					<div class="control-group">
+						<label class="control-label" for="today">Сегодня</label>
+					    <div class="controls">
+					    	<input type="text" id="today" placeholder="Сегодня">
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" for="payday">День зарплаты</label>
+					   	<div class="controls">
+					    	<input type="text" id="payday" placeholder="День зарплаты" value="16.04.2015">
+					    </div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" for="payday">Осталось денег</label>
+					   	<div class="controls">
+					    	<input type="text" id="balance" value="5000" placeholder="Осталось денег">
+						</div>
+					</div>
+				
+			</div>
+		
+			<div class="span7">
+				<table id="expenses-table" class="table table-striped">
+					<tr>
+						<th>Что нужно оплатить</th>
+						<th>Сумма</th>
+						<th>Сколько раз платить</th>
+						<th></th>
+				</table>
+				<button id="add-row-button" class="btn btn-success">Добавить строку</button>
+				<hr>
+				<p class="lead">
+					<strong>Остаток:&nbsp;</strong><span id="total"></span>
+				</p>
+				<!--<button id="calc-button" class="btn btn-primary">Расчёт</button>-->
+				
+				
+			</div>
+		</div>
+		<!--
+		<div class="row">
+			<div class="span12">
+				<table>
+					<tr>
+						<td>Останется денег</td>
+						<td><input id="total" type="text" readonly class="total-field"></td>
+				</table>
+				<button id="calc-button" class="btn btn-primary">Расчёт</button>
+			</div>
+		</div>
+		-->
+		</div>
+
+	</body>
+</html>
