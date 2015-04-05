@@ -1,4 +1,6 @@
-var PAY_TYPES = [
+App = {};
+
+App.PAY_TYPES = [
 	{value: 'once', name: 'Один раз'},
 	{value: 'everyDay', name: 'Каждый день'},
 	{value: 'monday', name: 'Каждый понедельник'},
@@ -10,12 +12,13 @@ var PAY_TYPES = [
 	{value: 'sunday', name: 'Каждое воскресенье'} 
 ];
 
-var rowId = 0;
+App.rowId = 0;
+App.modified = false;
 
-function addRow(name, sum, typeId){
+App.addRow = function(name, sum, typeId){
 	var opts = '';
-	for(var key in PAY_TYPES){
-		obj = PAY_TYPES[key];
+	for(var key in this.PAY_TYPES){
+		obj = this.PAY_TYPES[key];
 		opts += '<option value="' + obj.value + '"';
 		if (typeId == obj.value)
 			opts += ' selected'
@@ -23,47 +26,71 @@ function addRow(name, sum, typeId){
 	};
 
 	$("#expenses-table").append(
-		'<tr id="row-' + rowId + '" class="sum-row">' +
-			'<td><input type="text" value="' + name + '" class="grid-input"></td>' +
-			'<td><input id="sum-' + rowId + '" type="text" value="' + sum + '" class="sum-input"></td>' +
+		'<tr id="row-' + this.rowId + '" class="sum-row">' +
+			'<td><input id="name-' + this.rowId + '" type="text" value="' + name + '" class="grid-input"></td>' +
+			'<td><input id="sum-' + this.rowId + '" type="text" value="' + sum + '" class="sum-input"></td>' +
 			'<td>' +
-				'<select id="type-' + rowId + '" class="type-select">' + opts + '</select>' +
+				'<select id="type-' + this.rowId + '" class="type-select">' + opts + '</select>' +
 			'</td>' +
 			'<td>' + 
-				'<a href="#" class="del-row-button btn btn-danger">' + 
+				'<a href="#" id="del-row-button-' + this.rowId + '" class="del-row-button btn btn-danger">' + 
 					'<i class="icon-trash icon-large icon-white"></i> ' + 
 					//'Удалить строку' +
 				'</a>' + 
 			'</td>'
 	);
-	rowId++;
+	App.addRowListeners(this.rowId);
+	this.rowId++;
 };
 
-Date.prototype.format = function(){
-	var day = this.getDate();
-	if (day < 10)
-		day = '0' + day;
-	var month = this.getMonth() + 1;
-	if (month < 10)
-		month = '0' + month;
-	var year = this.getFullYear();
-	return day + '.' + month + '.' + year;
+App.removeAllRows = function(){
+	$(".sum-row").remove();
 };
 
-Date.myParse = function(text){
-	var day = parseInt(text.substring(0, 2));
-	var month = parseInt(text.substring(3, 5)) - 1;
-	var year = parseInt(text.substring(6, 10));
-	return new Date(year, month, day);
+App.addRowListeners = function(rowId){
+	$("#expenses-table").on("click", "#del-row-button-" + rowId, function(evt){
+		$(evt.target).parents("tr").remove();
+		App.update();
+	});
+	$("#name-" + rowId + ",#sum-" + rowId + ",#type-" + rowId).keydown(function(){
+		setTimeout(App.update, 0);
+	});
+	$("#name-" + rowId + ",#sum-" + rowId + ",#type-" + rowId).change(function(){
+		setTimeout(App.update, 0);
+	});
 };
 
-Date.daysBetween = function(date1, date2){
-	var timeDiff = date2.getTime() - date1.getTime();
-	var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-	return diffDays;
-}
+App.saveData = function(){
+	var data = {
+		payDay: $("#payday").val(),
+		balance: $("#balance").val(),
+		rows: []
+	};
+	var names = $(".grid-input"),
+		sums = $(".sum-input"),
+		types = $(".type-select");
+	for(var i = 0; i < names.length; i++){
+		data.rows.push({
+			name: names.eq(i).val(),
+			sum: sums.eq(i).val(),
+			typeId: types.eq(i).val()
+		});
+	};
+	return data;
+};
 
-function readExpenses(){
+App.loadData = function(data){
+	$("#payDay").val(data.payDay);
+	$("#balance").val(data.balance);
+	this.removeAllRows();
+	for(var key in data.rows){
+		var row = data.rows[key];
+		this.addRow(row.name, row.sum, row.typeId);
+	};
+	App.update();
+};
+
+App.readExpenses = function(){
 	var expenses = [];
 	var rows = $(".sum-row");
 	for(var i = 0; i < rows.length; i++){
@@ -76,9 +103,9 @@ function readExpenses(){
 		};
 	};
 	return expenses;
-}
+};
 
-function isCalcDay(weekday, payType){
+App.isCalcDay = function(weekday, payType){
 	switch(payType){
 		case 'everyDay':
 			return true
@@ -96,10 +123,10 @@ function isCalcDay(weekday, payType){
 			return weekday == 5;
 	}
 	return false;
-}
+};
 
-function calc(){
-	var exps = readExpenses();
+App.calc = function(){
+	var exps = this.readExpenses();
 	var today = Date.myParse($("#today").val());
 	var payDay = Date.myParse($("#payday").val());
 	var dayCount = Date.daysBetween(today, payDay);
@@ -107,7 +134,7 @@ function calc(){
 	while (today < payDay){
 		var weekday = today.getDay();
 		for(var i = 0; i < exps.length; i++)
-			if (isCalcDay(weekday, exps[i].type))
+			if (this.isCalcDay(weekday, exps[i].type))
 				fullSum += exps[i].sum;
 		today.setDate(today.getDate() + 1);
 	}
@@ -117,30 +144,198 @@ function calc(){
 	return {sum: fullSum, dayCount: dayCount};
 };
 
-function update(){
-	var result = calc();
+App.update = function(){
+	var result = App.calc();
 	var profit = parseInt($("#balance").val());
 	var total = profit - result.sum;
 	$("#dayCount").text(result.dayCount);
 	$("#total").text(total);
+	App.modified = true;
 };
+
+App.autoSave = function(){
+	if (App.modified)
+		App.saveToServer();
+}
+
+App.saveToServer = function(){
+	if (!Util.login || !App.modified)
+		return;
+	var data = App.saveData();
+	$.ajax({
+		url: 'save.php',
+		type: 'POST',
+		cache: false,
+		data: JSON.stringify({
+			user: Util.login,
+			password: Util.password,
+			data: data
+		}),
+		contentType: 'application/json; charset=UTF-8',
+		success: function(){
+			App.modified = false;
+		},
+		error: function(jqXHR){
+			if (jqXHR.status == 403)
+				App.logout();
+		}
+	})
+};
+
+App.loadFromServer = function(){
+	$.ajax({
+		url: 'load.php',
+		type: 'GET',
+		cache: false,
+		data: {
+			data: JSON.stringify({
+				user: Util.login,
+				password: Util.password
+			})
+		},
+		contentType: 'application/json; charset=UTF-8',
+		success: function(data){
+			App.modified = false;
+			if (data){
+				var obj = JSON.parse(data);
+				App.loadData(obj);
+			}
+			else
+				App.removeAllRows();
+			App.afterLogin();
+		},
+		error: function(jqXHR, textStatus, errorThrown){
+			if (jqXHR.status == 403)
+				App.logout();
+		}
+	})
+};
+
+App.afterLogin = function(){
+	$("#user-panel").show();
+	$("#logged-user-name").text(Util.login);
+	$("#login-panel").hide();
+	$("#register-panel").hide();
+	$("#warning-panel").hide();
+}
+
+App.afterLogout = function(){
+	$("#user-panel").hide();
+	$("#register-panel").hide();
+	$("#login-panel").hide();
+	$("#warning-panel").show();
+}
+
+App.readCookie = function(){
+	$("#login-panel").hide();
+	$("#register-panel").hide();
+	Util.login = $.cookie('login');
+	Util.password = $.cookie('password');
+	if (Util.login){
+		$("#logged-user-name").text(Util.login);	
+	}
+	else{
+		$("#warning-panel").show();
+		$("#user-panel").hide();
+	}
+}
+
+App.logout = function(){
+	$.cookie('login', '');
+	$.cookie('password', '');
+	App.readCookie();
+	App.afterLogout();
+}
+
+App.register = function(){
+	Util.regLogin = $('#email-input').val();
+	Util.regPassword  = $('#password-input').val();
+	$.ajax({
+		url: 'register.php',
+		type: 'GET',
+		cache: false,
+		data: {
+			data: JSON.stringify({
+				user: Util.regLogin,
+				password: Util.regPassword
+			})
+		},
+		success: function(data){
+			var obj = JSON.parse(data);
+			if (obj.success){
+				$.cookie('login', Util.regLogin);
+				$.cookie('password', Util.regPassword);
+				App.afterLogin();
+				App.readCookie();
+				App.saveToServer();
+			}
+			else
+				$("#register-error-msg").text(obj.message);
+		},
+		error: function(jqXHR, textStatus, errorThrown){
+			$("#register-error-msg").text("ошибка при регистрации");
+		}
+	});
+};
+
+App.login = function(){
+	$.cookie('login', $("#email-entry").val());
+	$.cookie('password', $("#password-entry").val());
+	App.readCookie();
+	App.loadFromServer();
+}
 
 $(document).ready(function(){
 	var now = new Date();
 	$("#today").val(now.format());
-	addRow('Еда коту', 600, 1);
 	$("#add-row-button").on("click", function(){
-		addRow('Еда коту', 600, 1);
-		update();
+		App.addRow('Еда коту', 600, 1);
+		App.update();
 	});
-	$("#expenses-table").on("click", ".del-row-button", function(evt){
-		$(evt.target).parents("tr").remove();
+	$("#today,#balance").keydown(function(){
+		setTimeout(App.update, 0);
 	});
-	$("#today,#balance,.sum-input,.type-select").keydown(function(){
-		setTimeout(update, 0);
+	$("#today,#balance").change(function(){
+		setTimeout(App.update, 0);
 	});
-	$("#today,#balance,.sum-input,.type-select").change(function(){
-		setTimeout(update, 0);
+	$("#register-button").click(function(){
+		App.register();
 	});
-	update();
+	$("#register-cancel-button").click(function(){
+		$("#register-panel").hide();
+		$("#warning-panel").show();
+	});
+
+	$("#email-input, #password-input").keydown(function(evt){
+		if (evt.which == 13)
+			App.register();
+	});
+
+	$("#login-button").click(function(){
+		App.login();
+	});
+	$("#login-cancel-button").click(function(){
+		$("#login-panel").hide();
+		$("#warning-panel").show();
+	});
+	$("#email-entry, #password-entry").keydown(function(evt){
+		if (evt.which == 13)
+			App.login();
+	});
+	$("#login-start-button").click(function(){
+		$("#warning-panel").hide();
+		$("#login-panel").show();
+		$("#email-entry").focus();
+	});
+	$("#reg-start-button").click(function(){
+		$("#warning-panel").hide();
+		$("#register-panel").show();
+		$("#email-input").focus();
+	});
+	$("#exit-button").click(function(){
+		App.logout();
+	});
+	App.readCookie();
+	App.loadFromServer();
+	setInterval(App.saveToServer, 1000);
 });

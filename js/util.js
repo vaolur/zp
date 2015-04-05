@@ -21,3 +21,8 @@ Date.daysBetween = function(date1, date2){
 	var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
 	return diffDays;
 }
+
+Util = {
+	login: null,
+	password: null
+};
