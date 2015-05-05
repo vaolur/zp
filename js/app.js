@@ -80,7 +80,7 @@ App.saveData = function(){
 };
 
 App.loadData = function(data){
-	$("#payDay").val(data.payDay);
+	$("#payday").val(data.payDay);
 	$("#balance").val(data.balance);
 	this.removeAllRows();
 	for(var key in data.rows){
@@ -292,10 +292,10 @@ $(document).ready(function(){
 		App.addRow('Еда коту', 600, 1);
 		App.update();
 	});
-	$("#today,#balance").keydown(function(){
+	$("#today,#payday,#balance").keydown(function(){
 		setTimeout(App.update, 0);
 	});
-	$("#today,#balance").change(function(){
+	$("#today,#payday,#balance").change(function(){
 		setTimeout(App.update, 0);
 	});
 	$("#register-button").click(function(){
